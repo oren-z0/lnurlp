@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 import os
 
 from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
+from lnbits.settings import settings as lnbits_settings
 
 from . import db
 from .models import CreatePayLinkData, LnurlpSettings, ExtendedLnurlpSettings, PayLink

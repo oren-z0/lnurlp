@@ -11,6 +11,7 @@ from lnurl_nostr1.types import LnurlPayMetadata
 from pydantic import BaseModel
 
 from lnbits.lnurl import encode as lnurl_encode
+from lnbits.settings import settings as lnbits_settings
 
 from .helpers import parse_nostr_private_key
 from .nostr.key import PrivateKey
