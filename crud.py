@@ -15,7 +15,7 @@ async def get_or_create_lnurlp_settings() -> ExtendedLnurlpSettings:
     lnbits_nostr2http_relays = []
     if lnbits_settings.lnbits_nostr2http_relays_filepath and os.path.exists(lnbits_settings.lnbits_nostr2http_relays_filepath):
         with open(lnbits_settings.lnbits_nostr2http_relays_filepath, "r") as lnbits_nostr2http_relays_file:
-            lines = [line.strip() for line in lnbits_nostr2http_relays_file.read().split("\n") if line.strip()]
+            lnbits_nostr2http_relays = [line.strip() for line in lnbits_nostr2http_relays_file.read().split("\n") if line.strip()]
     if row:
         return ExtendedLnurlpSettings(lnbits_nostr2http_relays=lnbits_nostr2http_relays, **row)
     else:
