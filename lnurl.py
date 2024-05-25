@@ -2,11 +2,14 @@ from http import HTTPStatus
 from typing import Optional
 
 from fastapi import Query, Request
+import httpx
 from lnurl_nostr1 import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
 from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
+from lnbits.settings import settings as lnbits_settings
+
 
 from . import lnurlp_ext
 from .crud import (
@@ -130,6 +133,14 @@ async def api_lnurl_response(
     url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
+    parsed_url = httpx.URL(url)
+    if not parsed_url.host.endswith(".onion") and parsed_url.scheme == "http" and parsed_url.host not in ["127.0.0.1", "0.0.0.0"]:
+        if lnbits_settings.lnbits_nostr2http_nprofile_filepath and os.path.exists(lnbits_settings.lnbits_nostr2http_nprofile_filepath):
+            with open(lnbits_settings.lnbits_nostr2http_nprofile_filepath, "r") as nprofile_file:
+                url = str(parsed_url.copy_with(
+                    host=nprofile_file.read() + ".nostr",
+                    port=None,
+                ))
 
     link.domain = request.url.netloc
 
