@@ -28,7 +28,7 @@ lnurlp_redirect_paths = [
 
 scheduled_tasks: List[asyncio.Task] = []
 
-lnurlp_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
+lnurlp_nostr_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
 
 
 def lnurlp_renderer():

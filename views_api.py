@@ -10,7 +10,7 @@ from lnbits.core.crud import get_user
 from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 
-from . import lnurlp_ext, scheduled_tasks
+from . import lnurlp_nostr_ext, scheduled_tasks
 from .crud import (
     create_pay_link,
     delete_lnurlp_settings,
@@ -28,19 +28,19 @@ from .models import CreatePayLinkData, LnurlpSettings
 
 
 # redirected from /.well-known/lnurlp
-@lnurlp_ext.get("/api/v1/well-known/{username}")
+@lnurlp_nostr_ext.get("/api/v1/well-known/{username}")
 async def lnaddress(username: str, request: Request):
     address_data = await get_address_data(username)
     assert address_data, "User not found"
     return await api_lnurl_response(request, address_data.id, webhook_data=None)
 
 
-@lnurlp_ext.get("/api/v1/currencies")
+@lnurlp_nostr_ext.get("/api/v1/currencies")
 async def api_list_currencies_available():
     return list(currencies.keys())
 
 
-@lnurlp_ext.get("/api/v1/links", status_code=HTTPStatus.OK)
+@lnurlp_nostr_ext.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
     req: Request,
     wallet: WalletTypeInfo = Depends(get_key_type),
@@ -65,7 +65,7 @@ async def api_links(
         )
 
 
-@lnurlp_ext.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@lnurlp_nostr_ext.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
     r: Request, link_id, wallet: WalletTypeInfo = Depends(get_key_type)
 ):
@@ -84,8 +84,8 @@ async def api_link_retrieve(
     return {**link.dict(), **{"lnurl": link.lnurl(r)}}
 
 
-@lnurlp_ext.post("/api/v1/links", status_code=HTTPStatus.CREATED)
-@lnurlp_ext.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@lnurlp_nostr_ext.post("/api/v1/links", status_code=HTTPStatus.CREATED)
+@lnurlp_nostr_ext.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_create_or_update(
     data: CreatePayLinkData,
     request: Request,
@@ -154,7 +154,7 @@ async def api_link_create_or_update(
     return {**link.dict(), "lnurl": link.lnurl(request)}
 
 
-@lnurlp_ext.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@lnurlp_nostr_ext.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_delete(link_id, wallet: WalletTypeInfo = Depends(get_key_type)):
     link = await get_pay_link(link_id)
 
@@ -172,7 +172,7 @@ async def api_link_delete(link_id, wallet: WalletTypeInfo = Depends(get_key_type
     return {"success": True}
 
 
-@lnurlp_ext.get("/api/v1/rate/{currency}", status_code=HTTPStatus.OK)
+@lnurlp_nostr_ext.get("/api/v1/rate/{currency}", status_code=HTTPStatus.OK)
 async def api_check_fiat_rate(currency):
     try:
         rate = await get_fiat_rate_satoshis(currency)
@@ -182,7 +182,7 @@ async def api_check_fiat_rate(currency):
     return {"rate": rate}
 
 
-@lnurlp_ext.delete("/api/v1", dependencies=[Depends(check_admin)])
+@lnurlp_nostr_ext.delete("/api/v1", dependencies=[Depends(check_admin)])
 async def api_stop():
     for t in scheduled_tasks:
         try:
@@ -193,12 +193,12 @@ async def api_stop():
     return {"success": True}
 
 
-@lnurlp_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
+@lnurlp_nostr_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_get_or_create_settings() -> LnurlpSettings:
     return await get_or_create_lnurlp_settings()
 
 
-@lnurlp_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
+@lnurlp_nostr_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
     try:
         parse_nostr_private_key(data.nostr_private_key)
@@ -209,6 +209,6 @@ async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
     return await update_lnurlp_settings(data)
 
 
-@lnurlp_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
+@lnurlp_nostr_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_lnurlp_settings()
