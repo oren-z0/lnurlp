@@ -1,10 +1,12 @@
 import json
+import os.path
 from sqlite3 import Row
-from typing import Dict, Optional
+from typing import List, Dict, Optional
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 from fastapi import Request
 from fastapi.param_functions import Query
+import httpx
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
 
@@ -25,6 +27,8 @@ class LnurlpSettings(BaseModel):
     def public_key(self) -> str:
         return self.private_key.public_key.hex()
 
+class ExtendedLnurlpSettings(LnurlpSettings):
+    lnbits_nostr2http_relays: List[str]
 
 class CreatePayLinkData(BaseModel):
     description: str
@@ -73,9 +77,17 @@ class PayLink(BaseModel):
     def lnurl(self, req: Request) -> str:
         url = str(req.url_for("lnurlp.api_lnurl_response", link_id=self.id))
         # Check if url is .onion and change to http
-        if urlparse(url).netloc.endswith(".onion"):
+        parsed_url = httpx.URL(url)
+        if parsed_url.host.endswith(".onion"):
             # change url string scheme to http
             url = url.replace("https://", "http://")
+        elif parsed_url.scheme == "http" and parsed_url.host not in ["127.0.0.1", "0.0.0.0"]:
+            if lnbits_settings.lnbits_nostr2http_nprofile_filepath and os.path.exists(lnbits_settings.lnbits_nostr2http_nprofile_filepath):
+                with open(lnbits_settings.lnbits_nostr2http_nprofile_filepath, "r") as nprofile_file:
+                    url = str(parsed_url.copy_with(
+                        host=nprofile_file.read() + ".nostr",
+                        port=None,
+                    ))
 
         return lnurl_encode(url)
 

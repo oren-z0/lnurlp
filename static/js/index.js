@@ -36,6 +36,13 @@ new Vue({
           "type": "str",
           "description": "Nostr private key used to zap",
           "name": "nostr_private_key",
+        },
+        {
+          "isList": true,
+          "type": "str",
+          "default": [],
+          "description": "List of nostr relays to listen for http-nostr requests",
+          "name": "lnbits_nostr2http_relays",
         }
       ],
       domain: window.location.host,

@@ -1,36 +1,52 @@
 from typing import List, Optional, Union
+import os
 
 from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
 
 from . import db
-from .models import CreatePayLinkData, LnurlpSettings, PayLink
+from .models import CreatePayLinkData, LnurlpSettings, ExtendedLnurlpSettings, PayLink
 from .nostr.key import PrivateKey
 from .services import check_lnaddress_format
 
 
-async def get_or_create_lnurlp_settings() -> LnurlpSettings:
+async def get_or_create_lnurlp_settings() -> ExtendedLnurlpSettings:
     row = await db.fetchone("SELECT * FROM lnurlp.settings LIMIT 1")
+    lnbits_nostr2http_relays = []
+    if lnbits_settings.lnbits_nostr2http_relays_filepath and os.path.exists(lnbits_settings.lnbits_nostr2http_relays_filepath):
+        with open(lnbits_settings.lnbits_nostr2http_relays_filepath, "r") as lnbits_nostr2http_relays_file:
+            lines = [line.strip() for line in lnbits_nostr2http_relays_file.read().split("\n")]    
     if row:
-        return LnurlpSettings(**row)
+        return ExtendedLnurlpSettings(lnbits_nostr2http_relays=lnbits_nostr2http_relays, **row)
     else:
-        settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
+        nostr_private_key = PrivateKey().hex()
+        settings = LnurlpSettings(nostr_private_key=nostr_private_key)
         await db.execute(
             insert_query("lnurlp.settings", settings),
             (*settings.dict().values(),)
         )
-        return settings
+        return ExtendedLnurlpSettings(
+            lnbits_nostr2http_relays=lnbits_nostr2http_relays,
+            nostr_private_key=nostr_private_key,
+        )
 
 
-async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
+async def update_lnurlp_settings(settings: ExtendedLnurlpSettings) -> ExtendedLnurlpSettings:
+    db_settings = LnurlpSettings(nostr_private_key=settings.nostr_private_key)
     await db.execute(
-        update_query("lnurlp.settings", settings, where=""),
-        (*settings.dict().values(),)
+        update_query("lnurlp.settings", db_settings, where=""),
+        (*db_settings.dict().values(),)
     )
+    if lnbits_settings.lnbits_nostr2http_relays_filepath:
+        os.makedirs(os.path.dirname(lnbits_settings.lnbits_nostr2http_relays_filepath), exist_ok=True)
+        with open(lnbits_settings.lnbits_nostr2http_relays_filepath, "w") as lnbits_nostr2http_relays_file:
+            lnbits_nostr2http_relays_file.write(settings.lnbits_nostr2http_relays.join("\n"))
     return settings
 
 
 async def delete_lnurlp_settings() -> None:
     await db.execute("DELETE FROM lnurlp.settings")
+    if lnbits_settings.lnbits_nostr2http_relays_filepath and os.path.exists(lnbits_settings.lnbits_nostr2http_relays_filepath):
+        os.remove(lnbits_settings.lnbits_nostr2http_relays_filepath)
 
 
 async def check_lnaddress_not_exists(username: str) -> bool:
