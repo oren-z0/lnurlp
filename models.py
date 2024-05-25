@@ -7,7 +7,7 @@ from urllib.parse import ParseResult, urlparse, urlunparse
 from fastapi import Request
 from fastapi.param_functions import Query
 import httpx
-from lnurl.types import LnurlPayMetadata
+from lnurl_nostr1.types import LnurlPayMetadata
 from pydantic import BaseModel
 
 from lnbits.lnurl import encode as lnurl_encode

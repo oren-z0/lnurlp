@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Optional
 
 from fastapi import Query, Request
-from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
+from lnurl_nostr1 import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
 from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
