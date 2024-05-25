@@ -1,9 +1,9 @@
 {
   "repos": [
     {
-      "id": "lnurlp_nostr",
+      "id": "lnurlp",
       "organisation": "oren-z0",
-      "repository": "lnurlp_nostr"
+      "repository": "lnurlp"
     }
   ]
 }

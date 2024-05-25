@@ -8,14 +8,14 @@ from starlette.exceptions import HTTPException
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 
-from . import lnurlp_nostr_ext
+from . import lnurlp_ext
 from .crud import (
     get_or_create_lnurlp_settings,
     increment_pay_link,
 )
 
 
-@lnurlp_nostr_ext.get(
+@lnurlp_ext.get(
     "/api/v1/lnurl/cb/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_callback",
@@ -107,12 +107,12 @@ async def api_lnurl_callback(
     return resp.dict()
 
 
-@lnurlp_nostr_ext.get(
+@lnurlp_ext.get(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response.deprecated",
 )
-@lnurlp_nostr_ext.get(
+@lnurlp_ext.get(
     "/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response",
