@@ -24,7 +24,7 @@ from .crud import (
 )
 from .helpers import parse_nostr_private_key
 from .lnurl import api_lnurl_response
-from .models import CreatePayLinkData, LnurlpSettings
+from .models import CreatePayLinkData, ExtendedLnurlpSettings
 
 
 # redirected from /.well-known/lnurlp
@@ -194,12 +194,12 @@ async def api_stop():
 
 
 @lnurlp_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
-async def api_get_or_create_settings() -> LnurlpSettings:
+async def api_get_or_create_settings() -> ExtendedLnurlpSettings:
     return await get_or_create_lnurlp_settings()
 
 
 @lnurlp_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
-async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
+async def api_update_settings(data: ExtendedLnurlpSettings) -> ExtendedLnurlpSettings:
     try:
         parse_nostr_private_key(data.nostr_private_key)
     except Exception:
