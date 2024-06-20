@@ -20,6 +20,12 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
         )
         return settings
 
+async def _pay_link_from_row(row: dict):
+    pay_link = PayLink.from_row(row)
+    settings = await get_or_create_lnurlp_settings()
+    if settings.domain:
+        pay_link.domain = settings.domain
+    return pay_link
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
     await db.execute(
@@ -104,12 +110,12 @@ async def get_address_data(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
-    return PayLink.from_row(row) if row else None
+    return (await _pay_link_from_row(row)) if row else None
 
 
 async def get_pay_link(link_id: str) -> Optional[PayLink]:
     row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
+    return (await _pay_link_from_row(row)) if row else None
 
 
 async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
@@ -124,7 +130,12 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
         """,
         (*wallet_ids,),
     )
-    return [PayLink.from_row(row) for row in rows]
+    pay_links = [PayLink.from_row(row) for row in rows]
+    settings = await get_or_create_lnurlp_settings()
+    if settings.domain:
+        for pay_link in pay_links:
+            pay_link.domain = settings.domain
+    return pay_links
 
 
 async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
@@ -137,7 +148,7 @@ async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
         f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
     )
     row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
+    return (await _pay_link_from_row(row)) if row else None
 
 
 async def increment_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
@@ -146,7 +157,7 @@ async def increment_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
         f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
     )
     row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
+    return (await _pay_link_from_row(row)) if row else None
 
 
 async def delete_pay_link(link_id: str) -> None:
